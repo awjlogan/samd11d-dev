@@ -2,6 +2,8 @@
 
 A minimal breakout board for the [Microchip (Atmel) ATSAMD11D][atsamd11] Cortex-M0+ based microcontroller. All pins broken out to standard 0.1in (2.54 mm) headers.
 
+![Rendered image][./samd11d-dev-render.png]
+
 All design files and source code are under the [_Don't Be A Dick_][dbad-github] license.
 
 ## Hardware

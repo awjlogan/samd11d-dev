@@ -5,10 +5,10 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 1
 Title "SAMD11D Simple Development Board"
-Date "2020-02-10"
-Rev "v0.1"
+Date "2020-06-07"
+Rev "v0.2"
 Comp "awjlogan"
-Comment1 "A small development board for Microchip [Atmel] SAMD11D Cortex-M0+ microcontroller"
+Comment1 "A minimal development board for Microchip [Atmel] SAMD11D Cortex-M0+ microcontroller"
 Comment2 "DBAD License"
 Comment3 ""
 Comment4 ""
@@ -581,119 +581,80 @@ Optional: I2C pullups
 $Comp
 L Device:R R3
 U 1 1 5E34A092
-P 7600 2250
-F 0 "R3" V 7500 2250 50  0000 C CNN
-F 1 "180R" V 7600 2250 50  0000 C CNN
-F 2 "Resistor_SMD:R_0603_1608Metric_Pad1.05x0.95mm_HandSolder" V 7530 2250 50  0001 C CNN
-F 3 "~" H 7600 2250 50  0001 C CNN
-	1    7600 2250
-	1    0    0    -1  
-$EndComp
-$Comp
-L Device:R R4
-U 1 1 5E34ABD2
-P 7800 2250
-F 0 "R4" V 7700 2250 50  0000 C CNN
-F 1 "180R" V 7800 2250 50  0000 C CNN
-F 2 "Resistor_SMD:R_0603_1608Metric_Pad1.05x0.95mm_HandSolder" V 7730 2250 50  0001 C CNN
-F 3 "~" H 7800 2250 50  0001 C CNN
-	1    7800 2250
+P 7600 2650
+F 0 "R3" V 7500 2650 50  0000 C CNN
+F 1 "330R" V 7600 2650 50  0000 C CNN
+F 2 "Resistor_SMD:R_0603_1608Metric_Pad1.05x0.95mm_HandSolder" V 7530 2650 50  0001 C CNN
+F 3 "~" H 7600 2650 50  0001 C CNN
+	1    7600 2650
 	1    0    0    -1  
 $EndComp
 $Comp
 L Device:R R5
 U 1 1 5E34AE89
-P 8000 2250
-F 0 "R5" V 7900 2250 50  0000 C CNN
-F 1 "180R" V 8000 2250 50  0000 C CNN
-F 2 "Resistor_SMD:R_0603_1608Metric_Pad1.05x0.95mm_HandSolder" V 7930 2250 50  0001 C CNN
-F 3 "~" H 8000 2250 50  0001 C CNN
-	1    8000 2250
+P 8000 2650
+F 0 "R5" V 7900 2650 50  0000 C CNN
+F 1 "330R" V 8000 2650 50  0000 C CNN
+F 2 "Resistor_SMD:R_0603_1608Metric_Pad1.05x0.95mm_HandSolder" V 7930 2650 50  0001 C CNN
+F 3 "~" H 8000 2650 50  0001 C CNN
+	1    8000 2650
 	1    0    0    -1  
 $EndComp
 $Comp
 L Device:LED D1
 U 1 1 5E34EE12
-P 7600 2650
-F 0 "D1" V 7700 2750 50  0000 R CNN
-F 1 "LED" V 7548 2533 50  0001 R CNN
-F 2 "LED_SMD:LED_0603_1608Metric_Pad1.05x0.95mm_HandSolder" H 7600 2650 50  0001 C CNN
-F 3 "~" H 7600 2650 50  0001 C CNN
-	1    7600 2650
+P 7600 3050
+F 0 "D1" V 7700 3150 50  0000 R CNN
+F 1 "LED" V 7548 2933 50  0001 R CNN
+F 2 "LED_SMD:LED_0603_1608Metric_Pad1.05x0.95mm_HandSolder" H 7600 3050 50  0001 C CNN
+F 3 "~" H 7600 3050 50  0001 C CNN
+	1    7600 3050
 	0    -1   -1   0   
 $EndComp
 $Comp
 L Device:LED D2
-U 1 1 5E34F43C
-P 7800 2650
-F 0 "D2" V 7900 2750 50  0000 R CNN
-F 1 "LED" V 7748 2533 50  0001 R CNN
-F 2 "LED_SMD:LED_0603_1608Metric_Pad1.05x0.95mm_HandSolder" H 7800 2650 50  0001 C CNN
-F 3 "~" H 7800 2650 50  0001 C CNN
-	1    7800 2650
-	0    -1   -1   0   
-$EndComp
-$Comp
-L Device:LED D3
 U 1 1 5E34F5D4
-P 8000 2650
-F 0 "D3" V 8100 2750 50  0000 R CNN
-F 1 "LED" V 7948 2533 50  0001 R CNN
-F 2 "LED_SMD:LED_0603_1608Metric_Pad1.05x0.95mm_HandSolder" H 8000 2650 50  0001 C CNN
-F 3 "~" H 8000 2650 50  0001 C CNN
-	1    8000 2650
+P 8000 3050
+F 0 "D2" V 8100 3150 50  0000 R CNN
+F 1 "LED" V 7948 2933 50  0001 R CNN
+F 2 "LED_SMD:LED_0603_1608Metric_Pad1.05x0.95mm_HandSolder" H 8000 3050 50  0001 C CNN
+F 3 "~" H 8000 3050 50  0001 C CNN
+	1    8000 3050
 	0    -1   -1   0   
 $EndComp
 Wire Wire Line
-	7600 2400 7600 2500
+	7600 2800 7600 2900
 Wire Wire Line
-	7800 2400 7800 2500
+	8000 2800 8000 2900
 Wire Wire Line
-	8000 2400 8000 2500
+	8000 3300 8000 3200
 Wire Wire Line
-	7800 2800 7800 2900
-Wire Wire Line
-	7800 2900 8000 2900
-Wire Wire Line
-	8000 2900 8000 2800
-Wire Wire Line
-	7800 2900 7600 2900
-Wire Wire Line
-	7600 2900 7600 2800
-Connection ~ 7800 2900
+	7600 3300 7600 3200
 $Comp
 L power:GND #PWR018
 U 1 1 5E35BCCF
-P 7600 3000
-F 0 "#PWR018" H 7600 2750 50  0001 C CNN
-F 1 "GND" H 7605 2827 50  0000 C CNN
-F 2 "" H 7600 3000 50  0001 C CNN
-F 3 "" H 7600 3000 50  0001 C CNN
-	1    7600 3000
+P 7600 3400
+F 0 "#PWR018" H 7600 3150 50  0001 C CNN
+F 1 "GND" H 7605 3227 50  0000 C CNN
+F 2 "" H 7600 3400 50  0001 C CNN
+F 3 "" H 7600 3400 50  0001 C CNN
+	1    7600 3400
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	7600 2900 7600 3000
-Connection ~ 7600 2900
-Wire Wire Line
-	7600 2100 7600 2000
-Wire Wire Line
-	7800 2100 7800 2000
-Wire Wire Line
-	8000 2000 8000 2100
-Text Label 7600 2000 1    50   ~ 0
-PA04
-Text Label 7800 2000 1    50   ~ 0
-PA03
+	7600 3300 7600 3400
+Connection ~ 7600 3300
 Text Label 8000 2000 1    50   ~ 0
-PA02
+PA14
+Text Label 7600 2000 1    50   ~ 0
+PA15
 $Comp
 L Switch:SW_Push SW1
 U 1 1 5E3677DB
 P 8900 4200
 F 0 "SW1" V 8854 4348 50  0000 L CNN
 F 1 "SW_Push" V 8945 4348 50  0000 L CNN
-F 2 "Button_Switch_SMD:SW_Push_SPST_NO_Alps_SKRK" H 8900 4400 50  0001 C CNN
+F 2 "Button_Switch_SMD:SW_Push_1P1T_NO_CK_KMR2" H 8900 4400 50  0001 C CNN
 F 3 "~" H 8900 4400 50  0001 C CNN
 	1    8900 4200
 	0    1    1    0   
@@ -704,7 +665,7 @@ U 1 1 5E368621
 P 9600 3700
 F 0 "SW2" V 9554 3848 50  0000 L CNN
 F 1 "SW_Push" V 9645 3848 50  0000 L CNN
-F 2 "Button_Switch_SMD:SW_Push_SPST_NO_Alps_SKRK" H 9600 3900 50  0001 C CNN
+F 2 "Button_Switch_SMD:SW_Push_1P1T_NO_CK_KMR2" H 9600 3900 50  0001 C CNN
 F 3 "~" H 9600 3900 50  0001 C CNN
 	1    9600 3700
 	0    1    1    0   
@@ -742,7 +703,7 @@ Wire Wire Line
 Text Label 8900 3400 1    50   ~ 0
 ~RST
 Text Label 9600 3400 1    50   ~ 0
-PA05
+PA16
 $Comp
 L Device:C C6
 U 1 1 5E374915
@@ -791,7 +752,7 @@ $EndComp
 Wire Wire Line
 	2500 4000 2500 4100
 $Comp
-L Power_Protection:USBLC6-2SC6 U4
+L samd11d-dev-rescue:USBLC6-2SC6-Power_Protection U4
 U 1 1 5E3A38D0
 P 4800 4300
 F 0 "U4" H 4950 4750 50  0000 C CNN
@@ -910,4 +871,78 @@ F 3 "" H 4800 3700 50  0001 C CNN
 $EndComp
 Text Notes 1150 7550 0    197  ~ 0
 DBAD
+Wire Wire Line
+	7600 3300 8000 3300
+$Comp
+L Device:R R4
+U 1 1 5EDCA46D
+P 6000 6250
+F 0 "R4" V 5900 6250 50  0000 C CNN
+F 1 "330R" V 6000 6250 50  0000 C CNN
+F 2 "Resistor_SMD:R_0603_1608Metric_Pad1.05x0.95mm_HandSolder" V 5930 6250 50  0001 C CNN
+F 3 "~" H 6000 6250 50  0001 C CNN
+	1    6000 6250
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5500 6050 6000 6050
+Wire Wire Line
+	6000 6050 6000 6100
+Connection ~ 5500 6050
+$Comp
+L Device:LED D3
+U 1 1 5EDCDD3D
+P 6000 6650
+F 0 "D3" V 6100 6750 50  0000 R CNN
+F 1 "LED" V 5948 6533 50  0001 R CNN
+F 2 "LED_SMD:LED_0603_1608Metric_Pad1.05x0.95mm_HandSolder" H 6000 6650 50  0001 C CNN
+F 3 "~" H 6000 6650 50  0001 C CNN
+	1    6000 6650
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	6000 6500 6000 6400
+$Comp
+L power:GND #PWR08
+U 1 1 5EDD1669
+P 6000 6900
+F 0 "#PWR08" H 6000 6650 50  0001 C CNN
+F 1 "GND" H 6005 6727 50  0000 C CNN
+F 2 "" H 6000 6900 50  0001 C CNN
+F 3 "" H 6000 6900 50  0001 C CNN
+	1    6000 6900
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	6000 6900 6000 6800
+$Comp
+L Device:Jumper_NC_Small JP1
+U 1 1 5EDDE8E2
+P 8000 2200
+F 0 "JP1" V 7954 2274 50  0000 L CNN
+F 1 "Jumper_NC_Small" V 8045 2274 50  0000 L CNN
+F 2 "Jumper:SolderJumper-2_P1.3mm_Bridged_RoundedPad1.0x1.5mm" H 8000 2200 50  0001 C CNN
+F 3 "~" H 8000 2200 50  0001 C CNN
+	1    8000 2200
+	0    1    1    0   
+$EndComp
+$Comp
+L Device:Jumper_NC_Small JP2
+U 1 1 5EDE0371
+P 7600 2200
+F 0 "JP2" V 7554 2274 50  0000 L CNN
+F 1 "Jumper_NC_Small" V 7645 2274 50  0000 L CNN
+F 2 "Jumper:SolderJumper-2_P1.3mm_Bridged_RoundedPad1.0x1.5mm" H 7600 2200 50  0001 C CNN
+F 3 "~" H 7600 2200 50  0001 C CNN
+	1    7600 2200
+	0    1    1    0   
+$EndComp
+Wire Wire Line
+	7600 2100 7600 2000
+Wire Wire Line
+	8000 2100 8000 2000
+Wire Wire Line
+	7600 2300 7600 2500
+Wire Wire Line
+	8000 2300 8000 2500
 $EndSCHEMATC

@@ -26,5 +26,5 @@ A full bill of materials with order codes for Farnell and Mouser is included.
 
 ## Datasheets and useful links
 
-[atsamd11] https://www.microchip.com/wwwproducts/en/ATSAMD11D14
+[atsamd11]: https://www.microchip.com/wwwproducts/en/ATSAMD11D14
 [dbad-github]: https://github.com/philsturgeon/dbad

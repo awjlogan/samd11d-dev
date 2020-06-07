@@ -4,8 +4,6 @@ A minimal breakout board for the [Microchip (Atmel) ATSAMD11D][atsamd11] Cortex-
 
 All design files and source code are under the [_Don't Be A Dick_][dbad-github] license.
 
-## Getting started
-
 ## Hardware
 
 PCB was designed with KiCad 5; all files are provided and no custom parts are required. Most components are surface mount, with passives being 0603 sized. Note that due to the part density, there are no reference designators on the top silkscreen.
@@ -23,8 +21,6 @@ A full bill of materials with order codes for Farnell and Mouser is included.
  - [X] Remove LED on PA03, just have ADC reference decoupling
  - [X] Add power indication LED
  - [X] Move switch onto pin with fewer alt functions (PA16)
-
-## Datasheets and useful links
 
 [atsamd11]: https://www.microchip.com/wwwproducts/en/ATSAMD11D14
 [dbad-github]: https://github.com/philsturgeon/dbad

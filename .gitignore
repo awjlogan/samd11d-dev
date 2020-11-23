@@ -3,3 +3,4 @@ sym-lib-table
 fp-info-cache
 *-bak
 *-cache.lib
+build/

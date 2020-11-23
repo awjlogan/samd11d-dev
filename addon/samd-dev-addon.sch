@@ -636,18 +636,6 @@ Wire Wire Line
 Wire Wire Line
 	9750 1150 9400 1150
 Wire Wire Line
-	9750 1250 9400 1250
-Wire Wire Line
-	9750 1350 9400 1350
-Wire Wire Line
-	9750 1650 9400 1650
-Wire Wire Line
-	9750 1750 9400 1750
-Wire Wire Line
-	9750 1850 9400 1850
-Wire Wire Line
-	9750 1950 9400 1950
-Wire Wire Line
 	9750 1550 9500 1550
 Wire Wire Line
 	9500 1550 9500 900 
@@ -659,18 +647,6 @@ Text Label 9400 1050 2    50   ~ 0
 PA22
 Text Label 9400 1150 2    50   ~ 0
 PA23
-Text Label 9400 1250 2    50   ~ 0
-PA04
-Text Label 9400 1350 2    50   ~ 0
-PA03
-Text Label 9400 1650 2    50   ~ 0
-PA02
-Text Label 9400 1950 2    50   ~ 0
-~RST
-Text Label 9400 1850 2    50   ~ 0
-PA30
-Text Label 9400 1750 2    50   ~ 0
-PA31
 Wire Wire Line
 	9500 3100 9500 3000
 Wire Wire Line
@@ -1167,4 +1143,96 @@ F 3 "" H 5500 1000 50  0001 C CNN
 	1    5500 1000
 	1    0    0    -1  
 $EndComp
+$Comp
+L Sensor_Pressure:MS5607-02BA U5
+U 1 1 5FAC6ABD
+P 1550 4550
+F 0 "U5" H 1880 4596 50  0000 L CNN
+F 1 "MS5607-02BA" H 1880 4505 50  0000 L CNN
+F 2 "Package_LGA:LGA-8_3x5mm_P1.25mm" H 1550 4550 50  0001 C CNN
+F 3 "https://www.te.com/commerce/DocumentDelivery/DDEController?Action=showdoc&DocId=Data+Sheet%7FMS5607-02BA03%7FB2%7Fpdf%7FEnglish%7FENG_DS_MS5607-02BA03_B2.pdf%7FCAT-BLPS0035" H 1550 4550 50  0001 C CNN
+	1    1550 4550
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:+3V3 #PWR0131
+U 1 1 5FAB4788
+P 1550 4050
+F 0 "#PWR0131" H 1550 3900 50  0001 C CNN
+F 1 "+3V3" H 1565 4223 50  0000 C CNN
+F 2 "" H 1550 4050 50  0001 C CNN
+F 3 "" H 1550 4050 50  0001 C CNN
+	1    1550 4050
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	1550 4150 1550 4050
+$Comp
+L power:GND #PWR0132
+U 1 1 5FAB99BE
+P 1550 5050
+F 0 "#PWR0132" H 1550 4800 50  0001 C CNN
+F 1 "GND" H 1555 4877 50  0000 C CNN
+F 2 "" H 1550 5050 50  0001 C CNN
+F 3 "" H 1550 5050 50  0001 C CNN
+	1    1550 5050
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	1550 5050 1550 4950
+Wire Wire Line
+	1150 4350 1050 4350
+Wire Wire Line
+	1050 4350 1050 4200
+$Comp
+L power:+3V3 #PWR0135
+U 1 1 5FACA2F5
+P 1050 4200
+F 0 "#PWR0135" H 1050 4050 50  0001 C CNN
+F 1 "+3V3" H 1065 4373 50  0000 C CNN
+F 2 "" H 1050 4200 50  0001 C CNN
+F 3 "" H 1050 4200 50  0001 C CNN
+	1    1050 4200
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	1150 4550 850  4550
+Wire Wire Line
+	1150 4650 850  4650
+NoConn ~ 1150 4450
+Text Label 850  4550 2    50   ~ 0
+PA22
+Text Label 850  4650 2    50   ~ 0
+PA23
+Text Notes 1050 4650 2    50   ~ 10
+SCL
+Text Notes 1050 4550 2    50   ~ 10
+SDA
+Wire Wire Line
+	1150 4750 1050 4750
+Wire Wire Line
+	1050 4750 1050 4850
+$Comp
+L power:GND #PWR0136
+U 1 1 5FAE1168
+P 1050 4850
+F 0 "#PWR0136" H 1050 4600 50  0001 C CNN
+F 1 "GND" H 1055 4677 50  0000 C CNN
+F 2 "" H 1050 4850 50  0001 C CNN
+F 3 "" H 1050 4850 50  0001 C CNN
+	1    1050 4850
+	1    0    0    -1  
+$EndComp
+NoConn ~ 1500 2150
+NoConn ~ 9750 1250
+NoConn ~ 9750 1350
+NoConn ~ 9750 1750
+NoConn ~ 9750 1850
+NoConn ~ 9750 1950
+Text Label 7500 5750 0    50   ~ 0
+PA02
+Wire Wire Line
+	9750 1650 9400 1650
+Text Label 9400 1650 2    50   ~ 0
+PA02
 $EndSCHEMATC

@@ -4,3 +4,4 @@ fp-info-cache
 *-bak
 *-cache.lib
 build/
+*.sublime-*

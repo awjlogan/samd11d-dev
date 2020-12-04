@@ -41,10 +41,11 @@
 #define PERIOD_FAST     100
 #define PERIOD_SLOW     500
 
-HAL_GPIO_PIN(LED,      A, 16)
-HAL_GPIO_PIN(BUTTON,   A, 14)
-HAL_GPIO_PIN(UART_TX,  A, 10)
-HAL_GPIO_PIN(UART_RX,  A, 11)
+HAL_GPIO_PIN(LED0,     A, 14)
+HAL_GPIO_PIN(LED1,     A, 15)
+HAL_GPIO_PIN(BUTTON,   A, 16)
+HAL_GPIO_PIN(UART_TX,  A, 8)
+HAL_GPIO_PIN(UART_RX,  A, 9)
 
 
 //-----------------------------------------------------------------------------
@@ -59,7 +60,7 @@ static void timer_set_period(uint16_t i)
 void irq_handler_tc1(void)
 {
     if (TC1->COUNT16.INTFLAG.reg & TC_INTFLAG_MC(1)) {
-        HAL_GPIO_LED_toggle();
+        HAL_GPIO_LED0_toggle();
         TC1->COUNT16.INTFLAG.reg = TC_INTFLAG_MC(1);
     }
 }
@@ -68,22 +69,37 @@ void irq_handler_tc1(void)
 //-----------------------------------------------------------------------------
 static void timer_init(void)
 {
-  PM->APBCMASK.reg |= PM_APBCMASK_TC1;
+    PM->APBCMASK.reg |= PM_APBCMASK_TC1;
 
-  GCLK->CLKCTRL.reg = GCLK_CLKCTRL_ID(TC1_GCLK_ID) |
-      GCLK_CLKCTRL_CLKEN | GCLK_CLKCTRL_GEN(0);
+    /* Setup clock system */
+    GCLK_CLKCTRL_Type clkctrl = {
+        .bit.ID = TC1_GCLK_ID,  /* Generic clock selection ID */
+        .bit.GEN = 0,           /* Generic clock generator */
+        .bit.CLKEN = true,      /* Clock enable */
+        .bit.WRTLOCK = false    /* Write lock */
+    };
+    GCLK->CLKCTRL.reg = clkctrl.reg;
 
-  TC1->COUNT16.CTRLA.reg = TC_CTRLA_MODE_COUNT16 | TC_CTRLA_WAVEGEN_MFRQ |
-      TC_CTRLA_PRESCALER_DIV256 | TC_CTRLA_PRESCSYNC_RESYNC;
+    /* Setup TC1 */
+    TC_CTRLA_Type ctrla = {
+        .bit.SWRST = false,                             /* Software reset */
+        .bit.ENABLE = false,                            /* Enable */
+        .bit.MODE = TC_CTRLA_MODE_COUNT16_Val,          /* TC mode */
+        .bit.WAVEGEN = TC_CTRLA_WAVEGEN_MFRQ_Val,       /* Waveform generation operation */
+        .bit.PRESCALER = TC_CTRLA_PRESCALER_DIV256_Val, /* Prescalar */
+        .bit.RUNSTDBY = false,                          /* Run in standby */
+        .bit.PRESCSYNC = TC_CTRLA_PRESCSYNC_RESYNC_Val  /* Prescalar/counter synchronisation */
+    };
+    TC1->COUNT16.CTRLA.reg = ctrla.reg;
 
-  TC1->COUNT16.COUNT.reg = 0;
+    /* Set period, and start timer */
+    TC1->COUNT16.COUNT.reg = 0;
+    timer_set_period(PERIOD_SLOW);
+    TC1->COUNT16.CTRLA.reg |= TC_CTRLA_ENABLE;
 
-  timer_set_period(PERIOD_SLOW);
-
-  TC1->COUNT16.CTRLA.reg |= TC_CTRLA_ENABLE;
-
-  TC1->COUNT16.INTENSET.reg = TC_INTENSET_MC(1);
-  NVIC_EnableIRQ(TC1_IRQn);
+    /* Enable interrupt */
+    TC1->COUNT16.INTENSET.reg = TC_INTENSET_MC(1);
+    NVIC_EnableIRQ(TC1_IRQn);
 }
 
 
@@ -93,24 +109,50 @@ static void uart_init(uint32_t baud)
     uint64_t br = (uint64_t)65536 * (F_CPU - 16 * baud) / F_CPU;
 
     HAL_GPIO_UART_TX_out();
-    HAL_GPIO_UART_TX_pmuxen(PORT_PMUX_PMUXE_C_Val);
+    HAL_GPIO_UART_TX_pmuxen(PORT_PMUX_PMUXE_D_Val); // SERCOM-ALT
     HAL_GPIO_UART_RX_in();
-    HAL_GPIO_UART_RX_pmuxen(PORT_PMUX_PMUXE_C_Val);
+    HAL_GPIO_UART_RX_pmuxen(PORT_PMUX_PMUXE_D_Val); // SERCOM-ALT
 
     PM->APBCMASK.reg |= PM_APBCMASK_SERCOM0;
 
-    GCLK->CLKCTRL.reg = GCLK_CLKCTRL_ID(SERCOM0_GCLK_ID_CORE) |
-        GCLK_CLKCTRL_CLKEN | GCLK_CLKCTRL_GEN(0);
+    GCLK_CLKCTRL_Type clkctrl = {
+        .bit.ID = SERCOM0_GCLK_ID_CORE, /* Generic clock selection ID */
+        .bit.GEN = 0,                   /* Generic clock generator */
+        .bit.CLKEN = true,              /* Clock enable */
+        .bit.WRTLOCK = false            /* Write lock */
+    };
+    GCLK->CLKCTRL.reg = clkctrl.reg;
 
-    SERCOM0->USART.CTRLA.reg =
-        SERCOM_USART_CTRLA_DORD | SERCOM_USART_CTRLA_MODE_USART_INT_CLK |
-        SERCOM_USART_CTRLA_RXPO(3/*PAD3*/) | SERCOM_USART_CTRLA_TXPO(1/*PAD2*/);
+    SERCOM_USART_CTRLA_Type ctrla = {
+        .bit.SWRST = false,                                     /* Software reset */
+        .bit.ENABLE = false,                                    /* Enable */
+        .bit.MODE = SERCOM_USART_CTRLA_MODE_USART_INT_CLK_Val,  /* Operating mode */
+        .bit.RUNSTDBY = false,                                  /* Run during standby */
+        .bit.IBON = false,                                      /* Immediate buffer overflow notification */
+        .bit.SAMPR = 0,                                         /* Sample */
+        .bit.TXPO = 0,                                          /* TX pinout (0) */
+        .bit.RXPO = 2,                                          /* RX pinout (2) */
+        .bit.SAMPA = 0,                                         /* Sample adjustment */
+        .bit.FORM = 0,                                          /* Frame format (USART frame) */
+        .bit.CMODE = 0,                                         /* Communication mode */
+        .bit.CPOL = 0,                                          /* Clock polarity */
+        .bit.DORD = 1                                           /* Data order (LSB first) */
+    };
+    SERCOM0->USART.CTRLA.reg = ctrla.reg;
 
-    SERCOM0->USART.CTRLB.reg = SERCOM_USART_CTRLB_RXEN | SERCOM_USART_CTRLB_TXEN |
-        SERCOM_USART_CTRLB_CHSIZE(0/*8 bits*/);
+    SERCOM_USART_CTRLB_Type ctrlb = {
+        .bit.CHSIZE = 0,                                        /* Character size (8) */
+        .bit.SBMODE = 0,                                        /* Stop bit mode */
+        .bit.COLDEN = false,                                    /* Collision detection enable */
+        .bit.SFDE = false,                                      /* Start of frame detection enable */
+        .bit.ENC = false,                                       /* IR Encoding */
+        .bit.PMODE = 0,                                         /* Parity mode (even) */
+        .bit.TXEN = true,                                       /* TX enable */
+        .bit.RXEN = true                                        /* RX enable */
+    };
+    SERCOM0->USART.CTRLB.reg = ctrlb.reg;
 
     SERCOM0->USART.BAUD.reg = (uint16_t)br+1;
-
     SERCOM0->USART.CTRLA.reg |= SERCOM_USART_CTRLA_ENABLE;
 }
 
@@ -119,14 +161,16 @@ static void uart_init(uint32_t baud)
 int main(void) {
 
     uint32_t cnt = 0;
+    uint32_t total_chars = 0;
     bool fast = false;
 
     sys_init();
     timer_init();
     uart_init(115200);
 
-    HAL_GPIO_LED_out();
-    HAL_GPIO_LED_clr();
+    HAL_GPIO_LED0_out();
+    HAL_GPIO_LED0_clr();
+    HAL_GPIO_LED1_write(0x1U);
 
     /* 128bits of unique ID -> 32 hex characters + NULL */
     uint32_t unique_id[4];
@@ -135,10 +179,10 @@ int main(void) {
     /* Get unique ID (Section 9.6)
      * Unfortunately, it's not contiguous so just enter address
      */
-    unique_id[0] = *(uint32_t *) 0x0080A00C;
-    unique_id[1] = *(uint32_t *) 0x0080A040;
-    unique_id[2] = *(uint32_t *) 0x0080A044;
-    unique_id[3] = *(uint32_t *) 0x0080A048;
+    unique_id[0] = *(volatile uint32_t *) 0x0080A00Cu;
+    unique_id[1] = *(volatile uint32_t *) 0x0080A040u;
+    unique_id[2] = *(volatile uint32_t *) 0x0080A044u;
+    unique_id[3] = *(volatile uint32_t *) 0x0080A048u;
 
     /* Convert the unique ID into hex characters */
     for (uint8_t i = 0; i < 4; i++) {
@@ -150,20 +194,22 @@ int main(void) {
     }
     unique_id_str[32] = (char) 0;
 
-    uart_puts("\r\nHello SAMD 0x");
+    uart_puts("\r\nHello! I am SAMD 0x");
     uart_puts(unique_id_str);
     uart_puts("\r\n");
 
     while (1) {
-        if (HAL_GPIO_BUTTON_read())
+        cnt++;
+        if (cnt == 5000) {
             cnt = 0;
-        else if (cnt < 5001)
-            cnt++;
-
-        if (5000 == cnt) {
+            timer_set_period(fast ? PERIOD_SLOW : PERIOD_FAST);
             fast = !fast;
-            timer_set_period(fast ? PERIOD_FAST : PERIOD_SLOW);
-            uart_putc('.');
+            __WFI();
+
+            /* Print up to 64 . */
+            if (total_chars++ < 64) {
+                uart_putc('.');
+            }
         }
     }
 

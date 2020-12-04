@@ -6,7 +6,9 @@ inline void sys_init(void)
 {
     /* Disable prescalar -> 8 MHz core clock */
     SYSCTRL->OSC8M.bit.PRESC = 0;
+    while (!SYSCTRL->PCLKSR.bit.OSC8MRDY);
 }
+
 
 //-----------------------------------------------------------------------------
 void uart_putc(const char c)
@@ -15,6 +17,7 @@ void uart_putc(const char c)
         SERCOM0->USART.DATA.reg = c;
     }
 }
+
 
 //-----------------------------------------------------------------------------
 void uart_puts(const char *s)

@@ -171,7 +171,10 @@ int main(void) {
 
     HAL_GPIO_LED0_out();
     HAL_GPIO_LED0_clr();
-    HAL_GPIO_LED1_write(0x1U);
+    HAL_GPIO_LED1_out();
+    HAL_GPIO_LED1_clr();
+
+    HAL_GPIO_LED0_write(0x1U);
 
     /* 128bits of unique ID -> 32 hex characters + NULL */
     uint32_t unique_id[4];
@@ -198,6 +201,8 @@ int main(void) {
     uart_puts("\r\nHello! I am SAMD 0x");
     uart_puts(unique_id_str);
     uart_puts("\r\n");
+
+    HAL_GPIO_LED1_write(0x1U);
 
     while (1) {
         cnt++;

@@ -39,37 +39,49 @@
 
 
 //-----------------------------------------------------------------------------
-#define PERIOD_FAST     100
-#define PERIOD_SLOW     500
+#define SAMPLE_PERIOD   10000ul /* ms */
+#define SAMPLE_PERIOD_S SAMPLE_PERIOD / 1000ul
+#define ADC_RESOLUTION  4096
+#define ADC_VREF        1.0
 
-HAL_GPIO_PIN(LED0,     A, 14)
-HAL_GPIO_PIN(LED1,     A, 15)
-HAL_GPIO_PIN(BUTTON,   A, 16)
-HAL_GPIO_PIN(UART_TX,  A, 8)
-HAL_GPIO_PIN(UART_RX,  A, 9)
+HAL_GPIO_PIN(LED0,      A, 14)
+HAL_GPIO_PIN(LED1,      A, 15)
+HAL_GPIO_PIN(BUTTON,    A, 16)
+HAL_GPIO_PIN(UART_TX,   A, 8)
+HAL_GPIO_PIN(UART_RX,   A, 9)
 
+volatile bool adc_res_ready = false;
 
 //-----------------------------------------------------------------------------
-static void timer_set_period(uint16_t i)
-{
+static void timer_set_period(uint16_t i) {
     TC1->COUNT16.CC[0].reg = (F_CPU / 1000ul / 256) * i;
     TC1->COUNT16.COUNT.reg = 0;
 }
 
 
 //-----------------------------------------------------------------------------
-void irq_handler_tc1(void)
-{
+void irq_handler_tc1(void) {
     if (TC1->COUNT16.INTFLAG.reg & TC_INTFLAG_MC(1)) {
-        HAL_GPIO_LED0_toggle();
         TC1->COUNT16.INTFLAG.reg = TC_INTFLAG_MC(1);
+        /* Start ADC conversion */
+        // REVISIT use an event, rather than an interrupt
+        ADC->SWTRIG.reg = ADC_SWTRIG_START;
+        while (ADC->STATUS.bit.SYNCBUSY);
     }
 }
 
 
 //-----------------------------------------------------------------------------
-static void timer_init(void)
-{
+void irq_handler_adc(void) {
+    if (ADC->INTFLAG.reg & ADC_INTFLAG_RESRDY) {
+        adc_res_ready = true;
+        ADC->INTFLAG.reg = ADC_INTFLAG_RESRDY;
+    }
+}
+
+
+//-----------------------------------------------------------------------------
+static void timer_init(void) {
     PM->APBCMASK.reg |= PM_APBCMASK_TC1;
 
     /* Setup clock system */
@@ -95,7 +107,7 @@ static void timer_init(void)
 
     /* Set period, and start timer */
     TC1->COUNT16.COUNT.reg = 0;
-    timer_set_period(PERIOD_SLOW);
+    timer_set_period(SAMPLE_PERIOD);
     TC1->COUNT16.CTRLA.reg |= TC_CTRLA_ENABLE;
 
     /* Enable interrupt */
@@ -105,8 +117,71 @@ static void timer_init(void)
 
 
 //-----------------------------------------------------------------------------
-static void uart_init(uint32_t baud)
-{
+static void adc_init(void) {
+
+    /* APB C Mask reset to 1 for ADC (15.8.11) */
+    // PM->APBCMASK.reg |= PM_APBCMASK_ADC;
+
+    /* Set up clock source */
+    GCLK_CLKCTRL_Type clkctrl = {
+        .bit.ID = ADC_GCLK_ID,  /* Generic clock selection ID */
+        .bit.GEN = 0,           /* Generic clock generator */
+        .bit.CLKEN = true,      /* Clock enable */
+        .bit.WRTLOCK = false    /* Write lock */
+    };
+    GCLK->CLKCTRL.reg = clkctrl.reg;
+
+    /* REFCTRL -> reset values correct, INT1V is reference source */
+    /* REVISIT sampling length control (57 us) */
+
+    ADC_CTRLB_Type ctrlb = {
+        .bit.DIFFMODE = false,                          /* Differential mode */
+        .bit.LEFTADJ = false,                           /* Left-adjusted result */
+        .bit.FREERUN = false,                           /* Free running mode */
+        .bit.CORREN = false,                            /* Digital correction logic enabled */
+        .bit.RESSEL = ADC_CTRLB_RESSEL_12BIT_Val,       /* Conversion result resolution */
+        .bit.PRESCALER = ADC_CTRLB_PRESCALER_DIV8_Val   /* Prescaler configuration */
+    };
+    ADC->CTRLB.reg = ctrlb.reg;
+    while (ADC->STATUS.bit.SYNCBUSY);   // Requires sync on write (31.6.13)
+
+    ADC_INPUTCTRL_Type inputctrl = {
+        .bit.MUXPOS = ADC_INPUTCTRL_MUXPOS_TEMP_Val,    /* Positive Mux input selection */
+        .bit.MUXNEG = ADC_INPUTCTRL_MUXNEG_GND_Val,     /* Negative Mux Input Selection */
+        .bit.INPUTSCAN = 0,                             /* Number of input channels included in scan */
+        .bit.INPUTOFFSET = 0,                           /* Positive mux setting offset */
+        .bit.GAIN = ADC_INPUTCTRL_GAIN_1X_Val           /* Gain factor selection */
+    };
+    ADC->INPUTCTRL.reg = inputctrl.reg;
+    while (ADC->STATUS.bit.SYNCBUSY);   // Requires sync on write (31.6.13)
+
+    /* Set up averaging (31.6.7) */
+    ADC_AVGCTRL_Type avgctrl = {
+        .bit.SAMPLENUM = ADC_AVGCTRL_SAMPLENUM_8_Val,   /* Number of samples to be collected */
+        .bit.ADJRES = 0x3                               /* Adjusting result / division coefficient */
+    };
+    ADC->AVGCTRL.reg = avgctrl.reg;
+
+    /* Set up interrupts */
+    ADC->INTENSET.reg = ADC_INTENSET_RESRDY;
+
+    /* Load factory calibration values from NVM (9.5) */
+    uint32_t nvm_calib_low = *(volatile uint32_t *) 0x00806020;
+    uint32_t nvm_calib_high = *(volatile uint32_t *) 0x00806024;
+
+    ADC_CALIB_Type calib = {
+        .bit.LINEARITY_CAL = ((nvm_calib_high & 0x3) << 5) | (nvm_calib_low >> 27),
+        .bit.BIAS_CAL = (nvm_calib_low >> 4) & 0x7
+    };
+    ADC->CALIB.reg = calib.reg;
+
+    NVIC_EnableIRQ(ADC_IRQn);
+}
+
+
+//-----------------------------------------------------------------------------
+static void uart_init(uint32_t baud) {
+
     uint64_t br = (uint64_t)65536 * (F_CPU - 16 * baud) / F_CPU;
 
     HAL_GPIO_UART_TX_out();
@@ -163,36 +238,47 @@ static void uart_init(uint32_t baud)
 
 
 //-----------------------------------------------------------------------------
+void adc_to_temp_str(char *buf, uint16_t adc_res) {
+
+    buf[0] = '\0';
+}
+
+//-----------------------------------------------------------------------------
 int main(void) {
 
-    uint32_t cnt = 0;
-    uint32_t total_chars = 0;
-    bool fast = false;
+    uint16_t result = 0;
+    char tx_buf[64];
 
     sys_init();
     timer_init();
+    adc_init();
     uart_init(115200);
 
     HAL_GPIO_LED0_out();
     HAL_GPIO_LED0_clr();
-    HAL_GPIO_LED1_write(0x1U);
+    HAL_GPIO_LED1_out();
+    HAL_GPIO_LED1_clr();
 
-    uart_puts("\r\nHello! I am SAMD 0x");
-    uart_puts(unique_id_str);
-    uart_puts("\r\n");
+    HAL_GPIO_LED0_write(0x1U);
+
+    /* Enable temperature sensor */
+    SYSCTRL->VREF.reg |= SYSCTRL_VREF_TSEN;
+
+    /* Enable ADC */
+    ADC->CTRLA.reg |= ADC_CTRLA_ENABLE;
+    while (ADC->STATUS.bit.SYNCBUSY);
+
+    uart_puts("\r\nHello! Starting temperature reading...\r\n\r\n");
 
     while (1) {
-        cnt++;
-        if (cnt == 5000) {
-            cnt = 0;
-            timer_set_period(fast ? PERIOD_SLOW : PERIOD_FAST);
-            fast = !fast;
-            __WFI();
 
-            /* Print up to 64 . */
-            if (total_chars++ < 64) {
-                uart_putc('.');
-            }
+        // An ADC result is ready!
+        if (adc_res_ready) {
+            adc_res_ready = false;
+            result = ADC->RESULT.reg;
+            while (ADC->STATUS.bit.SYNCBUSY);
+            adc_to_temp_str(tx_buf, result);
+            uart_puts(tx_buf);
         }
     }
 

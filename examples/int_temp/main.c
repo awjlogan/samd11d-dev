@@ -240,6 +240,42 @@ static void uart_init(uint32_t baud) {
 //-----------------------------------------------------------------------------
 void adc_to_temp_str(char *buf, uint16_t adc_res) {
 
+    /* Temperature sensor characteristics (35.10.8)
+     * Absolute:    0.688 V at 25 C
+     * T variation: 2.16 +/- 0.1 mV/C => 8.8 LSB/C
+    */
+
+    /* Get temperature from code by simple linear fit
+     * T = (ADC - 2598) / 8.8
+     *
+     * REVISIT Use calibration method from datasheet
+     */
+
+    #define C   2598
+    #define M   8.8f
+
+    float temperature;
+    adc_res -= C;
+    temperature = adc_res / M;
+
+    bool is_negative;
+    uint8_t decimals[4];
+
+    /* Check for 0 */
+    if (temperature > 0.1 && temperature < -0.1) {
+        for (uint8_t i = 0; i < 4; i++) {
+            decimals[i] = 0;
+        }
+    }
+
+    /* Check for negative */
+    if (temperature > 0) {
+        is_negative = true;
+        temperature = -temperature;
+    }
+
+    for (uint8_t)
+
     buf[0] = '\0';
 }
 

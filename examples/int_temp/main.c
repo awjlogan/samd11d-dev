@@ -50,71 +50,6 @@ HAL_GPIO_PIN(BUTTON,    A, 16)
 HAL_GPIO_PIN(UART_TX,   A, 8)
 HAL_GPIO_PIN(UART_RX,   A, 9)
 
-volatile bool adc_res_ready = false;
-
-//-----------------------------------------------------------------------------
-static void timer_set_period(uint16_t i) {
-    TC1->COUNT16.CC[0].reg = (F_CPU / 1000ul / 256) * i;
-    TC1->COUNT16.COUNT.reg = 0;
-}
-
-
-//-----------------------------------------------------------------------------
-void irq_handler_tc1(void) {
-    if (TC1->COUNT16.INTFLAG.reg & TC_INTFLAG_MC(1)) {
-        TC1->COUNT16.INTFLAG.reg = TC_INTFLAG_MC(1);
-        /* Start ADC conversion */
-        // REVISIT use an event, rather than an interrupt
-        ADC->SWTRIG.reg = ADC_SWTRIG_START;
-        while (ADC->STATUS.bit.SYNCBUSY);
-    }
-}
-
-
-//-----------------------------------------------------------------------------
-void irq_handler_adc(void) {
-    if (ADC->INTFLAG.reg & ADC_INTFLAG_RESRDY) {
-        adc_res_ready = true;
-        ADC->INTFLAG.reg = ADC_INTFLAG_RESRDY;
-    }
-}
-
-
-//-----------------------------------------------------------------------------
-static void timer_init(void) {
-    PM->APBCMASK.reg |= PM_APBCMASK_TC1;
-
-    /* Setup clock system */
-    GCLK_CLKCTRL_Type clkctrl = {
-        .bit.ID = TC1_GCLK_ID,  /* Generic clock selection ID */
-        .bit.GEN = 0,           /* Generic clock generator */
-        .bit.CLKEN = true,      /* Clock enable */
-        .bit.WRTLOCK = false    /* Write lock */
-    };
-    GCLK->CLKCTRL.reg = clkctrl.reg;
-
-    /* Setup TC1 */
-    TC_CTRLA_Type ctrla = {
-        .bit.SWRST = false,                             /* Software reset */
-        .bit.ENABLE = false,                            /* Enable */
-        .bit.MODE = TC_CTRLA_MODE_COUNT16_Val,          /* TC mode */
-        .bit.WAVEGEN = TC_CTRLA_WAVEGEN_MFRQ_Val,       /* Waveform generation operation */
-        .bit.PRESCALER = TC_CTRLA_PRESCALER_DIV256_Val, /* Prescalar */
-        .bit.RUNSTDBY = false,                          /* Run in standby */
-        .bit.PRESCSYNC = TC_CTRLA_PRESCSYNC_RESYNC_Val  /* Prescalar/counter synchronisation */
-    };
-    TC1->COUNT16.CTRLA.reg = ctrla.reg;
-
-    /* Set period, and start timer */
-    TC1->COUNT16.COUNT.reg = 0;
-    timer_set_period(SAMPLE_PERIOD);
-    TC1->COUNT16.CTRLA.reg |= TC_CTRLA_ENABLE;
-
-    /* Enable interrupt */
-    TC1->COUNT16.INTENSET.reg = TC_INTENSET_MC(1);
-    NVIC_EnableIRQ(TC1_IRQn);
-}
-
 
 //-----------------------------------------------------------------------------
 static void adc_init(void) {
@@ -132,7 +67,11 @@ static void adc_init(void) {
     GCLK->CLKCTRL.reg = clkctrl.reg;
 
     /* REFCTRL -> reset values correct, INT1V is reference source */
-    /* REVISIT sampling length control (57 us) */
+    /* Sampling length control (57 us) */
+    ADC_SAMPCTRL_Type sampctrl = {
+        .bit.SAMPLEN = 0x1E
+    };
+    ADC->SAMPCTRL.reg = sampctrl.reg;
 
     ADC_CTRLB_Type ctrlb = {
         .bit.DIFFMODE = false,                          /* Differential mode */
@@ -162,9 +101,6 @@ static void adc_init(void) {
     };
     ADC->AVGCTRL.reg = avgctrl.reg;
 
-    /* Set up interrupts */
-    ADC->INTENSET.reg = ADC_INTENSET_RESRDY;
-
     /* Load factory calibration values from NVM (9.5) */
     uint32_t nvm_calib_low = *(volatile uint32_t *) 0x00806020;
     uint32_t nvm_calib_high = *(volatile uint32_t *) 0x00806024;
@@ -174,8 +110,6 @@ static void adc_init(void) {
         .bit.BIAS_CAL = (nvm_calib_low >> 4) & 0x7
     };
     ADC->CALIB.reg = calib.reg;
-
-    NVIC_EnableIRQ(ADC_IRQn);
 }
 
 
@@ -246,47 +180,50 @@ void adc_to_temp_str(char *buf, uint16_t adc_res) {
     */
 
     /* Get temperature from code by simple linear fit
+     * Assuming INT1V == 1.000 V, and ADC is perfect:
+     *
      * T = (ADC - 2598) / 8.8
      *
      * REVISIT Use calibration method from datasheet
      */
 
-    #define C   2598
-    #define M   8.8f
-
-    float temperature;
-    adc_res -= C;
-    temperature = adc_res / M;
-
-    bool is_negative;
-    uint8_t decimals[4];
-
-    /* Check for 0 */
-    if (temperature > 0.1 && temperature < -0.1) {
-        for (uint8_t i = 0; i < 4; i++) {
-            decimals[i] = 0;
+    uint8_t decimals[3] = {};
+    float temperature = (float)adc_res - 2598.0f;
+    temperature = temperature / 8.8f;
+    
+    /* Convert f -> decimal value 
+     * Assume 100 > T > 0 
+     */
+    temperature = temperature * 10.0;
+    for (uint8_t i = 3; i > 0; i--) {
+        float sub_val = 1.0f;
+        for (uint8_t j = 0; j < (i - 1); j++) {
+            sub_val = sub_val * 10;
+        }
+        while ((temperature - sub_val) > 0.0) {
+            temperature = temperature - sub_val;
+            decimals[i - 1]++;
         }
     }
 
-    /* Check for negative */
-    if (temperature > 0) {
-        is_negative = true;
-        temperature = -temperature;
-    }
-
-    for (uint8_t)
-
-    buf[0] = '\0';
+    /* Pack into string */
+    buf[0] = decimals[2] + '0';
+    buf[1] = decimals[1] + '0';
+    buf[2] = '.';
+    buf[3] = decimals[0] + '0';
+    buf[4] = '\0';
 }
 
 //-----------------------------------------------------------------------------
 int main(void) {
 
+    const uint32_t max_count = 500000;
+
+    uint32_t count = 0;
     uint16_t result = 0;
-    char tx_buf[64];
+    char tx_buf[16];
 
     sys_init();
-    timer_init();
     adc_init();
     uart_init(115200);
 
@@ -297,8 +234,9 @@ int main(void) {
 
     HAL_GPIO_LED0_write(0x1U);
 
-    /* Enable temperature sensor */
-    SYSCTRL->VREF.reg |= SYSCTRL_VREF_TSEN;
+    /* Enable temperature sensor and bandgap */
+    SYSCTRL->VREF.reg |=   SYSCTRL_VREF_TSEN
+                         | SYSCTRL_VREF_BGOUTEN;
 
     /* Enable ADC */
     ADC->CTRLA.reg |= ADC_CTRLA_ENABLE;
@@ -308,13 +246,21 @@ int main(void) {
 
     while (1) {
 
-        // An ADC result is ready!
-        if (adc_res_ready) {
-            adc_res_ready = false;
+        count++;
+        if (count == max_count) {
+            count = 0;
+
+            /* Start conversion and poll for result ready */
+            ADC->SWTRIG.reg |= ADC_SWTRIG_START;
+            while (!(ADC->INTFLAG.reg & ADC_INTFLAG_RESRDY));
+
+            /* Get result, and convert to T */
             result = ADC->RESULT.reg;
             while (ADC->STATUS.bit.SYNCBUSY);
             adc_to_temp_str(tx_buf, result);
             uart_puts(tx_buf);
+            HAL_GPIO_LED0_toggle();
+            HAL_GPIO_LED1_toggle();
         }
     }
 
